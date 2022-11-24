@@ -35,6 +35,7 @@ plt.subplots_adjust(wspace=0.4, hspace=0.4)
 X0, X1 = X[:, 0], X[:, 1]
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
+    print(clf)
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,

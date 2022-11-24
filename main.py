@@ -3,6 +3,28 @@ import os
 
 from flask import Flask, request, Response
 from werkzeug import utils
+from sklearn import svm, datasets
+from sklearn.inspection import DecisionBoundaryDisplay
+from joblib import dump, load
+
+upload_dir = 'models/'
+
+
+def create_model():
+    iris = datasets.load_iris()
+    X = iris.data[:, :2]
+    y = iris.target
+
+    C = 1.0  # SVM regularization parameter
+    model = svm.SVC(kernel="linear", C=C)
+    fitted_model = model.fit(X, y)
+
+    return fitted_model
+
+
+def save_model(model):
+    filename = 'iris.model'
+    dump(model, utils.safe_join(upload_dir, filename))
 
 
 def create_app(test_config=None):
@@ -25,17 +47,13 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
     @app.route('/hello')
     def hello():
         return 'Ohhhh fuck!'
 
-
     @app.route('/create', methods=['POST', ])
     def create():
         try:
-            upload_dir = 'uploads/'
-
             target = request.args.get('target', None)
             if not target :
                 print('No target')
@@ -43,7 +61,13 @@ def create_app(test_config=None):
 
             f = request.files['csv_file']
             filename = utils.secure_filename(f.filename)
-            f.save(utils.safe_join(upload_dir, filename))
+            f.save(filename)
+
+            print('Starting on the model')
+            model = create_model()
+            save_model(model)
+            print('Finished the model')
+
         except Exception as e:
             logging.warning("We have an exception ", exc_info=e)
             return Response(status=500)
@@ -53,6 +77,9 @@ def create_app(test_config=None):
     @app.route('/predict', methods=['POST', ])
     def predict():
         try:
+            input_line = request.args.get('input_line', None)
+            make_prediction()
+
             return Response('Hello, World!', status=200)
 
         except Exception as e:
