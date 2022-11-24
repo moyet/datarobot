@@ -12,15 +12,17 @@ from joblib import dump, load
 upload_dir = 'models/'
 
 
-def create_model():
+def create_model(target):
     iris = datasets.load_iris()
-    X = iris.data[:, :2]
+    X = iris.data[:, :4]
     y = iris.target
 
     C = 1.0  # SVM regularization parameter
-    #model = svm.SVC(kernel="linear", C=C)
-    #model = svm.SVC(kernel="rbf", gamma=0.7, C=C)
-    model = svm.SVC(kernel="poly", degree=3, gamma="auto", C=C)
+
+    model = svm.SVC(kernel="linear", C=C)
+#   model = svm.SVC(kernel="rbf", gamma=0.7, C=C)
+#   model = svm.SVC(kernel="poly", degree=3, gamma="auto", C=C)
+
     fitted_model = model.fit(X, y)
 
     return fitted_model
@@ -31,18 +33,21 @@ def save_model(model):
     filename = 'iris.model'
     dump(model, utils.safe_join(upload_dir, filename))
 
+
 def load_model():
     # I know that this could be unsafe
     filename = 'iris.model'
     model = load(utils.safe_join(upload_dir, filename))
     return model
 
-def make_prediction(input_values):
 
+def make_prediction(input_values):
     model = load_model()
+    iris = datasets.load_iris()
+
     v = model.predict([input_values])
 
-    return v
+    return iris.target_names[v]
 
 
 def create_app(test_config=None):
@@ -73,7 +78,7 @@ def create_app(test_config=None):
     def create():
         try:
             target = request.args.get('target', None)
-            if not target :
+            if not target:
                 print('No target')
                 return Response(status=400)
 
@@ -81,7 +86,7 @@ def create_app(test_config=None):
             filename = utils.secure_filename(f.filename)
             f.save(filename)
 
-            model = create_model()
+            model = create_model(target)
             save_model(model)
 
         except Exception as e:
@@ -99,9 +104,9 @@ def create_app(test_config=None):
                 return Response('No input-line', status=400)
 
             input_values = list(map(float, input_line.split(',')))
-            predict = make_prediction(input_values)
+            prediction = make_prediction(input_values)
 
-            return Response(str(predict), status=200)
+            return Response(str(prediction), status=200)
 
         except FileNotFoundError as e:
             logging.warning('File not found', exc_info=e)
