@@ -1,4 +1,3 @@
-import array
 import logging
 import os
 
@@ -9,7 +8,7 @@ from sklearn import svm, datasets
 
 from joblib import dump, load
 
-upload_dir = 'models/'
+upload_dir = '../models/'
 
 
 def create_model(target):
