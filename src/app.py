@@ -68,58 +68,62 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-
-    @app.route('/hello')
-    def hello():
-        return 'Ohhhh fuck!'
-
-    @app.route('/create', methods=['POST', ])
-    def create():
-        try:
-            target = request.args.get('target', None)
-            if not target:
-                print('No target')
-                return Response(status=400)
-
-            f = request.files['csv_file']
-            filename = utils.secure_filename(f.filename)
-            f.save(filename)
-
-            model = create_model(target)
-            save_model(model)
-
-        except Exception as e:
-            logging.warning("We have an exception ", exc_info=e)
-            return Response(status=500)
-
-        return Response(status=202)
-
-    @app.route('/predict', methods=['POST', ])
-    def predict():
-        try:
-            input_line = request.args.get('input_line', None)
-
-            if not input_line:
-                return Response('No input-line', status=400)
-
-            input_values = list(map(float, input_line.split(',')))
-            prediction = make_prediction(input_values)
-
-            return Response(str(prediction), status=200)
-
-        except FileNotFoundError as e:
-            logging.warning('File not found', exc_info=e)
-            return Response(status=404)
-        except Exception as e:
-            logging.warning("We have an exception ", exc_info=e)
-            return Response(status=500)
-
     return app
+
+
+app = create_app()
+
+
+@app.route('/create', methods=['POST', ])
+def create():
+    try:
+        target = request.args.get('target', None)
+        if not target:
+            print('No target')
+            return Response(status=400)
+
+        f = request.files['csv_file']
+        filename = utils.secure_filename(f.filename)
+        f.save(filename)
+
+        model = create_model(target)
+        save_model(model)
+
+    except Exception as e:
+        logging.warning("We have an exception ", exc_info=e)
+        return Response(status=500)
+
+    return Response(status=202)
+
+
+@app.route('/hello')
+def hello():
+    return 'Hello DataRobot!'
+
+
+@app.route('/predict', methods=['POST', ])
+def predict():
+    try:
+        input_line = request.args.get('input_line', None)
+
+        if not input_line:
+            return Response('No input-line', status=400)
+
+        input_values = list(map(float, input_line.split(',')))
+        prediction = make_prediction(input_values)
+
+        return Response(str(prediction), status=200)
+
+    except FileNotFoundError as e:
+        logging.warning('File not found', exc_info=e)
+        return Response(status=404)
+    except Exception as e:
+        logging.warning("We have an exception ", exc_info=e)
+        return Response(status=500)
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
