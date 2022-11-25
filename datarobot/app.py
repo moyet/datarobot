@@ -6,7 +6,7 @@ from datarobot import create_app
 from flask import request, Response
 from werkzeug import utils
 
-from sklearn import svm, datasets
+from sklearn import svm
 from joblib import dump, load
 from pandas import read_csv
 
@@ -105,4 +105,3 @@ def predict():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     app.run(debug=True)
-
