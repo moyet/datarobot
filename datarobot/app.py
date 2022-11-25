@@ -1,20 +1,26 @@
 import logging
 import os
 
-from flask import Flask, request, Response
+from datarobot import create_app
+
+from flask import request, Response
 from werkzeug import utils
 
 from sklearn import svm, datasets
-
 from joblib import dump, load
+from pandas import read_csv
 
-upload_dir = '../models/'
+upload_dir = '/tmp/models/'
+
+if not os.path.exists(upload_dir):
+    os.mkdir(upload_dir)
+
+app = create_app()
 
 
-def create_model(target):
-    iris = datasets.load_iris()
-    X = iris.data[:, :4]
-    y = iris.target
+def create_model(dataframe, target):
+    y = dataframe.pop(target).values
+    X = dataframe.values
 
     C = 1.0  # SVM regularization parameter
 
@@ -42,36 +48,10 @@ def load_model():
 
 def make_prediction(input_values):
     model = load_model()
-    iris = datasets.load_iris()
 
     v = model.predict([input_values])
 
-    return iris.target_names[v]
-
-
-def create_app(test_config=None):
-    # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY='clojure-rules',
-        )
-
-    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # load the test config if passed in
-        app.config.from_mapping(test_config)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    return app
-
-
-app = create_app()
+    return v
 
 
 @app.route('/create', methods=['POST', ])
@@ -79,14 +59,14 @@ def create():
     try:
         target = request.args.get('target', None)
         if not target:
-            print('No target')
             return Response(status=400)
 
         f = request.files['csv_file']
         filename = utils.secure_filename(f.filename)
-        f.save(filename)
+        dataframe = read_csv(f)
 
-        model = create_model(target)
+        model = create_model(dataframe, target)
+
         save_model(model)
 
     except Exception as e:
@@ -96,7 +76,7 @@ def create():
     return Response(status=202)
 
 
-@app.route('/hello')
+@app.route('/hello', methods=['GET'])
 def hello():
     return 'Hello DataRobot!'
 
@@ -126,4 +106,3 @@ def predict():
 if __name__ == '__main__':
     app.run(debug=True)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
