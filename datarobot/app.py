@@ -1,19 +1,18 @@
 import logging
 import os
 
-from datarobot import create_app
-
 from flask import request, Response
 from werkzeug import utils
-
 from sklearn import svm
 from joblib import dump, load
 from pandas import read_csv
 
-upload_dir = '/tmp/models/'
+from datarobot import create_app
 
-if not os.path.exists(upload_dir):
-    os.mkdir(upload_dir)
+UPLOAD_DIR = '/tmp/models/'
+
+if not os.path.exists(UPLOAD_DIR):
+    os.mkdir(UPLOAD_DIR)
 
 app = create_app()
 
@@ -36,13 +35,13 @@ def create_model(dataframe, target):
 def save_model(model):
     # This is unsafe, but since I have control over who can post to this API
     filename = 'iris.model'
-    dump(model, utils.safe_join(upload_dir, filename))
+    dump(model, utils.safe_join(UPLOAD_DIR, filename))
 
 
 def load_model():
     # I know that this could be unsafe
     filename = 'iris.model'
-    model = load(utils.safe_join(upload_dir, filename))
+    model = load(utils.safe_join(UPLOAD_DIR, filename))
     return model
 
 
@@ -62,7 +61,6 @@ def create():
             return Response(status=400)
 
         f = request.files['csv_file']
-        filename = utils.secure_filename(f.filename)
         dataframe = read_csv(f)
 
         model = create_model(dataframe, target)

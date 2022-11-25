@@ -1,6 +1,3 @@
-import os
-import tempfile
-
 import pytest
 from datarobot import create_app
 

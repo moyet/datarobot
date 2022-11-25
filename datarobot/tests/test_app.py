@@ -1,12 +1,8 @@
-import io
-import os
 from io import BytesIO
 from os.path import exists
 from werkzeug import utils
-import json
 
-from flask import url_for
-from datarobot.app import app, upload_dir
+from datarobot.app import app, UPLOAD_DIR
 
 
 def test_hello_route():
@@ -47,7 +43,7 @@ def test_create_with_a_csv_file():
     assert response.status_code == 202
 
     filename = 'iris.model'
-    assert exists(utils.safe_join(upload_dir, filename))
+    assert exists(utils.safe_join(UPLOAD_DIR, filename))
 
 
 def test_predict():
